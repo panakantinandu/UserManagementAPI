@@ -62,18 +62,19 @@ middleware, rejected traffic is logged by the auth middleware.
 
 ## Testing performed
 
-> Same caveat as [DEBUGGING.md](DEBUGGING.md): no .NET SDK is available in
-> this environment, so these were traced through the code by hand, not
-> executed. Verify with `dotnet run` and the commands below.
+Built and run for real with `dotnet build` / `dotnet run` (.NET 6 SDK) and
+exercised with `curl` against a live local instance, then confirmed against
+the server's console log.
 
-| Scenario | Request | Expected result |
-|----------|---------|------------------|
-| No token | `GET /api/users` (no `Authorization` header) | `401`, `{ "error": "Missing or invalid API token." }` |
-| Wrong token | `GET /api/users` with `Authorization: Bearer wrong` | `401`, same body |
-| Valid token | `GET /api/users` with `Authorization: Bearer dev-secret-token` | `200` with users |
-| Swagger without token | `GET /swagger/index.html` (no header) | `200` (exempt) |
-| Unhandled exception | Any request that triggers an unexpected server error | `500`, `{ "error": "Internal server error." }` |
-| Logging | Any authorized request | Console shows a `Request: <METHOD> <PATH>` line followed by a `Response: <METHOD> <PATH> responded <STATUS>` line |
+| Scenario | Request | Expected result | Actual result |
+|----------|---------|------------------|----------------|
+| No token | `GET /api/users` (no `Authorization` header) | `401`, `{ "error": "Missing or invalid API token." }` | `401` with exactly that body |
+| Wrong token | `GET /api/users` with `Authorization: Bearer wrong-token` | `401`, same body | `401` with the same body |
+| Valid token | `GET /api/users` with `Authorization: Bearer dev-secret-token` | `200` with users | `200`, both seeded users returned |
+| Swagger without token | `GET /swagger/index.html` (no header) | `200` (exempt) | `200` |
+| Logging | Any authorized request | Console shows a `Request: <METHOD> <PATH>` line, then a `Response: <METHOD> <PATH> responded <STATUS>` line | Confirmed in the console log for every authorized `GET`/`POST`/`PUT`/`DELETE` sent during this test pass |
+| Rejected requests excluded from the request/response log | Send an unauthorized request, then check the log | Only `TokenAuthenticationMiddleware`'s "Rejected request..." warning appears — no `Request:`/`Response:` line for it | Confirmed: the log had 3 "Rejected request to /api/users: missing or invalid token" lines and zero matching `Request:`/`Response:` lines for those same calls |
+| Unhandled exception → `500` | — | `{ "error": "Internal server error." }` | **Not actually exercised.** Nothing in the current code path (validated input, guarded lookups) throws an unhandled exception, so `ExceptionHandlingMiddleware`'s catch block was verified by reading the code, not by triggering it live. A malformed-JSON request, which seemed like a plausible trigger, is instead caught earlier by ASP.NET Core's own model binder and returns its standard `400 ValidationProblemDetails`, never reaching this middleware. |
 
 ```bash
 dotnet run &
@@ -106,4 +107,5 @@ curl -i http://localhost:5223/swagger/index.html
 - Pointed out the logging-after-auth ordering means rejected requests
   wouldn't appear in the request/response log, and suggested logging
   rejections directly inside the auth middleware to keep the audit trail
-  complete without breaking the required middleware order.
+  complete without breaking the required middleware order — confirmed live
+  by grepping the console log for both request types.

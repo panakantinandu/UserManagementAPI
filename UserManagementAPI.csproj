@@ -10,4 +10,12 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
   </ItemGroup>
 
+  <!-- UserManagementAPI-main/ is a separate reference copy the user keeps locally
+       (not part of this project, excluded from git); exclude it from compilation too. -->
+  <ItemGroup>
+    <Compile Remove="UserManagementAPI-main\**\*.cs" />
+    <Content Remove="UserManagementAPI-main\**\*" />
+    <None Remove="UserManagementAPI-main\**\*" />
+  </ItemGroup>
+
 </Project>
