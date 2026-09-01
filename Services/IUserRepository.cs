@@ -13,4 +13,6 @@ public interface IUserRepository
     bool Update(int id, User user);
 
     bool Delete(int id);
+
+    bool EmailExists(string email, int? excludeUserId = null);
 }

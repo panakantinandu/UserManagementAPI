@@ -5,12 +5,18 @@ teams to create, retrieve, update, and delete user records.
 
 ## Features
 
-- **GET** `/api/users` — retrieve all users
+- **GET** `/api/users` — retrieve all users (supports `?page=&pageSize=` pagination)
 - **GET** `/api/users/{id}` — retrieve a single user by ID
 - **POST** `/api/users` — create a new user
 - **PUT** `/api/users/{id}` — update an existing user
 - **DELETE** `/api/users/{id}` — remove a user by ID
+- Input validation (required fields, email format, duplicate-email detection)
+- Global exception-handling middleware so unhandled errors return a safe
+  `500` response instead of crashing the API
 - Swagger / OpenAPI UI for exploring and testing the API
+
+See [DEBUGGING.md](DEBUGGING.md) for the bugs found in the initial release
+and how they were fixed.
 
 ## Tech stack
 
@@ -40,11 +46,18 @@ an interactive API explorer.
 
 | Method | Route              | Description                    | Success | Failure |
 |--------|---------------------|--------------------------------|---------|---------|
-| GET    | `/api/users`         | List all users                 | 200     | —       |
-| GET    | `/api/users/{id}`    | Get a single user               | 200     | 404     |
-| POST   | `/api/users`         | Create a new user                | 201     | 400     |
-| PUT    | `/api/users/{id}`    | Update an existing user          | 204     | 400, 404|
-| DELETE | `/api/users/{id}`    | Delete a user                     | 204     | 404     |
+| GET    | `/api/users`         | List all users (`?page=&pageSize=` optional) | 200 | — |
+| GET    | `/api/users/{id}`    | Get a single user               | 200     | 400, 404 |
+| POST   | `/api/users`         | Create a new user                | 201     | 400, 409 |
+| PUT    | `/api/users/{id}`    | Update an existing user          | 204     | 400, 404, 409 |
+| DELETE | `/api/users/{id}`    | Delete a user                     | 204     | 400, 404 |
+
+- `400` — invalid input (missing/invalid fields, non-positive ID, missing body)
+- `404` — no user exists with the given ID
+- `409` — another user already has the given email
+
+Error responses have the shape `{ "error": "message" }` (or ASP.NET Core's
+standard validation problem details for `400`s from model validation).
 
 ### User model
 

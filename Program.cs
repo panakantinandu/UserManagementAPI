@@ -1,3 +1,4 @@
+using UserManagementAPI.Middleware;
 using UserManagementAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +13,10 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<IUserRepository, InMemoryUserRepository>();
 
 var app = builder.Build();
+
+// Catch unhandled exceptions from any downstream middleware/controller so the API
+// returns a safe, structured error instead of crashing or leaking a stack trace.
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

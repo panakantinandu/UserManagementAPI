@@ -20,6 +20,7 @@ public class InMemoryUserRepository : IUserRepository
 
     public User Add(User user)
     {
+        Normalize(user);
         user.Id = Interlocked.Increment(ref _nextId);
         _users[user.Id] = user;
         return user;
@@ -32,10 +33,25 @@ public class InMemoryUserRepository : IUserRepository
             return false;
         }
 
+        Normalize(user);
         user.Id = id;
         _users[id] = user;
         return true;
     }
 
     public bool Delete(int id) => _users.TryRemove(id, out _);
+
+    public bool EmailExists(string email, int? excludeUserId = null)
+    {
+        return _users.Values.Any(u =>
+            u.Id != excludeUserId &&
+            string.Equals(u.Email, email, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static void Normalize(User user)
+    {
+        user.FirstName = user.FirstName.Trim();
+        user.LastName = user.LastName.Trim();
+        user.Email = user.Email.Trim();
+    }
 }
