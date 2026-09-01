@@ -39,8 +39,7 @@ public class ExceptionHandlingMiddleware
 
             var payload = JsonSerializer.Serialize(new
             {
-                status = 500,
-                error = "An unexpected error occurred. Please try again later."
+                error = "Internal server error."
             });
 
             await context.Response.WriteAsync(payload);

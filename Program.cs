@@ -14,9 +14,13 @@ builder.Services.AddSingleton<IUserRepository, InMemoryUserRepository>();
 
 var app = builder.Build();
 
-// Catch unhandled exceptions from any downstream middleware/controller so the API
-// returns a safe, structured error instead of crashing or leaking a stack trace.
+// Middleware pipeline order (per corporate policy):
+// 1. Error handling  - outermost, so it can catch exceptions from every stage below it.
+// 2. Authentication   - reject unauthorized requests before they reach app logic.
+// 3. Logging          - records what actually made it through to the endpoint.
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseMiddleware<TokenAuthenticationMiddleware>();
+app.UseMiddleware<RequestResponseLoggingMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

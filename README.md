@@ -13,10 +13,14 @@ teams to create, retrieve, update, and delete user records.
 - Input validation (required fields, email format, duplicate-email detection)
 - Global exception-handling middleware so unhandled errors return a safe
   `500` response instead of crashing the API
+- Token-based authentication — every `/api/*` request requires an
+  `Authorization: Bearer <token>` header
+- Request/response logging for every authorized request
 - Swagger / OpenAPI UI for exploring and testing the API
 
 See [DEBUGGING.md](DEBUGGING.md) for the bugs found in the initial release
-and how they were fixed.
+and how they were fixed, and [MIDDLEWARE.md](MIDDLEWARE.md) for details on
+the logging, error-handling, and authentication middleware.
 
 ## Tech stack
 
@@ -41,6 +45,17 @@ dotnet run
 By default the API starts at `https://localhost:7123` and `http://localhost:5223`
 (see `Properties/launchSettings.json`). Once running, browse to `/swagger` for
 an interactive API explorer.
+
+Every `/api/*` request must include a bearer token:
+
+```bash
+curl -i http://localhost:5223/api/users -H "Authorization: Bearer dev-secret-token"
+```
+
+The development token (`dev-secret-token`) is set in
+`appsettings.Development.json`. For any other environment, set a real value
+via the `Authentication__ApiToken` environment variable or user secrets —
+see [MIDDLEWARE.md](MIDDLEWARE.md).
 
 ## API reference
 
@@ -79,6 +94,7 @@ email address.
 Controllers/    API controllers (UsersController)
 Models/         Data models (User)
 Services/       Data access (IUserRepository, InMemoryUserRepository)
+Middleware/     Exception handling, token auth, request/response logging
 Program.cs      App startup and middleware configuration
 ```
 
